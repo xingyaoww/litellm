@@ -1485,7 +1485,7 @@ def anthropic_messages_pt(  # noqa: PLR0915
                 model=model,
                 llm_provider=llm_provider,
             )
-    if not new_messages or new_messages[0]["role"] not in {"user", "tool", "function"}:
+    if not new_messages or new_messages[0]["role"] != "user":
         if litellm.modify_params:
             new_messages.insert(
                 0, {"role": "user", "content": [{"type": "text", "text": "."}]}
