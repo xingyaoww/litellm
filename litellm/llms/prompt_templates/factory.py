@@ -1385,7 +1385,6 @@ def anthropic_messages_pt(  # noqa: PLR0915
             msg_i += 1
 
         if user_content and user_message_types_block["role"] in {"tool", "function"}:
-            print("user_content", user_content)
             if user_message_types_block["role"] == "tool":
                 tool_message: ChatCompletionToolMessage = user_message_types_block
                 tool_call_id: str = tool_message["tool_call_id"]
@@ -1407,6 +1406,17 @@ def anthropic_messages_pt(  # noqa: PLR0915
                         user_message_types_block["role"]
                     )
                 )
+            # cache control doesn't work for TOOLS if individual content elements have it, so we need to add it to the tool result
+            # {"type":"error","error":{"type":"invalid_request_error","message":"messages.2.content.0.tool_result: cache_control is not supported within tool result content"}}
+            # add cache_control to tool result if any of the content elements have it
+            cache_control = None
+            for m in anthropic_tool_result.get("content", []):
+                if m.get("cache_control") is not None:
+                    cache_control = m.get("cache_control")
+                    m.pop("cache_control")
+            if cache_control is not None:
+                anthropic_tool_result["cache_control"] = cache_control
+
             new_messages.append({"role": "user", "content": [anthropic_tool_result]})
         elif user_content:
             new_messages.append({"role": "user", "content": user_content})
